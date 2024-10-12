@@ -1,10 +1,12 @@
 const image = {
-    logo: "http://localhost:8000/images/Molino-Polyclinic-Logo.png",
+    logo: "https://medical-appointment-aqqs.onrender.com"
+
+// /images/Molino-Polyclinic-Logo.png",
 };
 
 const ip ={
-    address: 'http://localhost:8000'
-    // address: 'https://medical-appointment-aqqs.onrender.com'
+    // address: 'http://localhost:8000'
+    address: 'https://medical-appointment-aqqs.onrender.com'
 };
 
 const specialties = [
