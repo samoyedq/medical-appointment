@@ -1,7 +1,7 @@
 const image = {
-    logo: "https://medical-appointment-aqqs.onrender.com"
+    logo: "https://medical-appointment-aqqs.onrender.com/images/Molino-Polyclinic-Logo.png"
 
-// /images/Molino-Polyclinic-Logo.png",
+
 };
 
 const ip ={
