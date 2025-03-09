@@ -14,7 +14,7 @@ const MongoStore = require('connect-mongo');
 const cors = require('cors');
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: 'https://medical-appointment-ivmr.onrender.com',
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
