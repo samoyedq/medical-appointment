@@ -23,19 +23,20 @@ app.use(
 
 app.use(
   session({
-    secret: 'session_secret_key', // Secure key
-    resave: false,
+    secret: 'session_secret_key',
+    resave: false, 
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true, // Must be true for cross-site cookies
-      sameSite: 'none', // Must be 'none' for cross-site cookies
-      maxAge: 30 * 24 * 60 * 60 * 1000
+      secure: true, // Must be true for cross-origin cookies
+      sameSite: 'none', // Must be 'none' for cross-origin cookies
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     },
     store: MongoStore.create({
-      mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0', // MongoDB connection
-      ttl: 30 * 24 * 60 * 60, // Session expiry in seconds
-    }),
+      mongoUrl: process.env.MONGODB_URI || 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb',
+      ttl: 30 * 24 * 60 * 60,
+      autoRemove: 'native'
+    })
   })
 );
 
@@ -138,6 +139,23 @@ app.get('*', (req, res) => {
 });
 app.get('/keepalive', (req, res) => {
   res.status(200).send('Service is alive');
+});
+
+app.get('/debug/session', (req, res) => {
+  res.json({
+    sessionID: req.sessionID,
+    session: req.session,
+    cookies: req.cookies,
+    hasUser: !!req.session.user
+  });
+});
+
+app.post('/debug/set-cookie', (req, res) => {
+  req.session.testValue = 'test-' + Date.now();
+  req.session.save(err => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, session: req.session });
+  });
 });
 // Start the server
 server.listen(port, '0.0.0.0', () => {
