@@ -80,7 +80,7 @@ function LandingPage() {
                 />
                 <div className="hero-absolute">
                   <h2 className="display-4 text-white fw-bold mb-4">
-                    Welcome to Molino Care App
+                    Welcome to Molino Care Affs
                   </h2>
                   <p className="lead text-white mb-4">
                     Medical Functional is most focused in helping you <br />
