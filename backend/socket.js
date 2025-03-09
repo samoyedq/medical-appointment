@@ -12,11 +12,15 @@ module.exports = {
   init: (server) => {
     io = new Server(server, {
       cors: {
-        origin: 'https://medical-appointment-mwuw.vercel.app', // Allow all origins
-        methods: ['GET', 'POST'],
+        origin: [
+        'https://medical-appointment-mwuw.vercel.app',
+        'http://localhost:3000',
+        ],
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true,
       },
     });
+
     io.on('connection', (socket) => {
       // console.log('A user connected:', socket.id);
 
