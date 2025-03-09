@@ -48,7 +48,7 @@ app.use(
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
     store: MongoStore.create({
-      mongoUrl: 'mongodb+srv://danielquilatan5:molinoapp77@cluster0.ortv3.mongodb.net/', // MongoDB connection
+      mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', // MongoDB connection
       ttl: 30 * 24 * 60 * 60, // Session expiry in seconds
     }),
   })
