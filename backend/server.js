@@ -48,7 +48,7 @@ app.use(
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
     store: MongoStore.create({
-      mongoUrl: 'mongodb://localhost:27017/PIMSdb', // MongoDB connection
+      mongoUrl: 'mongodb+srv://danielquilatan5:molinoapp77@cluster0.ortv3.mongodb.net/', // MongoDB connection
       ttl: 30 * 24 * 60 * 60, // Session expiry in seconds
     }),
   })
