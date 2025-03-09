@@ -1,14 +1,29 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
-// mongoose.connect('mongodb://127.0.0.1:27017/PIMSdb', 
-{
+// mongoose.connect('mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0'
+// ,
+// // mongoose.connect('mongodb://127.0.0.1:27017/PIMSdb', 
+// {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+//   serverSelectionTimeoutMS: 10000,
+//   tlsInsecure: false,
+//   ssl: true,
+
+// });
+
+mongoose.connect('mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 10000,
-  tlsInsecure: false,
-  ssl: true,
+  serverSelectionTimeoutMS: 10000
+});
 
+mongoose.connection.on('connected', () => {
+  console.log('✅ MongoDB connected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB connection error:', err);
 });
 
 

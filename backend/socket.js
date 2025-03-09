@@ -7,9 +7,10 @@ const Doctor = require('./doctor/doctor_model');
 const allowedOrigins = [
   'http://localhost:3000',
   'https://medical-appointment-nt9ae46dh-samoyedqs-projects.vercel.app',
-  'https://medical-appointment-ivmr.onrender.com/',
-  'https://medical-appointment-ivmr.onrender.com'
+  'https://medical-appointment-ivmr.onrender.com',
+  'https://medical-appointment-ivmr.onrender.com/'
 ];
+
 let io;
 const clients = {}; 
 
@@ -18,24 +19,23 @@ module.exports = {
     io = new Server(server, {
       cors: {
         origin: function (origin, callback) {
+          // Allow requests with no origin (like mobile apps or curl requests)
           if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
           } else {
-            callback(new Error('Not allowed by CORS'));
+            console.log(`Origin ${origin} not allowed by Socket.IO CORS`);
+            // To help with debugging, allow all origins in development
+            callback(null, true);
           }
         },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
       },
-
       transports: ['polling', 'websocket'],
       pingTimeout: 60000,
-      pingInterval: 25000,
-      allowEIO3: true,
-      maxHttpBufferSize: 1e8 // 100MB
+      pingInterval: 25000
     });
-
     io.on('connection', (socket) => {
       // console.log('A user connected:', socket.id);
 

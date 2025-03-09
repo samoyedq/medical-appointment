@@ -13,19 +13,22 @@ const MongoStore = require('connect-mongo');
 
 const cors = require('cors');
 const allowedOrigins = [
-  'http://localhost:3000', // React CRA default dev port
+  'http://localhost:3000',
   'https://medical-appointment-nt9ae46dh-samoyedqs-projects.vercel.app',
+  'https://medical-appointment-ivmr.onrender.com',
   'https://medical-appointment-ivmr.onrender.com/',
-  'https://medical-appointment-ivmr.onrender.com' // production frontend
+  'https://molino-backend.onrender.com'
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("Request origin:", origin);
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.log(`Origin ${origin} blocked by CORS`);
+        callback(null, true); // Temporarily allow all origins for debugging
       }
     },
     credentials: true,
@@ -34,22 +37,22 @@ app.use(
   })
 );
 
-
 app.use(
   session({
-    secret: 'session_secret_key', // Secure key
+    secret: 'session_secret_key',
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
+      // Only one secure property, and properly configured
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      secure: false,
+      // For cross-domain cookies in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
     store: MongoStore.create({
-      mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', // MongoDB connection
-      ttl: 30 * 24 * 60 * 60, // Session expiry in seconds
+      mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0',
+      ttl: 30 * 24 * 60 * 60,
     }),
   })
 );
@@ -82,7 +85,6 @@ app.use('/images', express.static(path.join(__dirname, 'announcement', 'images')
 app.use('/images', express.static(path.join(__dirname, 'news', 'images')));
 app.use('/images', express.static(path.join(__dirname, 'specialty', 'images')));
 app.use('/images', express.static(path.join(__dirname, 'services', 'images')));
-app.use('images', express.static(path.join(__dirname, 'about-company', 'images')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
