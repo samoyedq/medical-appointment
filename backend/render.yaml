@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: molino-backend
+    runtime: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18.19.1
+      - key: NODE_ENV
+        value: production
