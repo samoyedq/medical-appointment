@@ -6,12 +6,12 @@ const image = {
     
 };
 
-const ip ={
-    address: 'https://molino-backend.onrender.com'
+const isProduction = window.location.hostname !== 'localhost';
 
-
-    // address: 'http://localhost:8000'
-
+const ip = {
+  address: isProduction 
+    ? 'https://molino-backend.onrender.com'  // Your deployed backend URL
+    : 'http://localhost:8000'                // Local development URL
 };
 
 axios.defaults.baseURL = ip.address;

@@ -12,7 +12,7 @@ module.exports = {
   init: (server) => {
     io = new Server(server, {
       cors: {
-        origin: `https://medical-appointment-ivmr.onrender.com`, // Allow all origins
+        origin: `https://medical-appointment-ivmr.onrender.com/`, // Allow all origins
         methods: ['GET', 'POST'],
         credentials: true,
       },

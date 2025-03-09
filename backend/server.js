@@ -14,7 +14,7 @@ const MongoStore = require('connect-mongo');
 const cors = require('cors');
 app.use(
   cors({
-    origin: `https://medical-appointment-ivmr.onrender.com`,
+    origin: `https://medical-appointment-ivmr.onrender.com/`,
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -34,7 +34,7 @@ app.use(
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
     store: MongoStore.create({
-      mongoUrl: 'mongodb://localhost:27017/PIMSdb', // MongoDB connection
+      mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0', // MongoDB connection
       ttl: 30 * 24 * 60 * 60, // Session expiry in seconds
     }),
   })
