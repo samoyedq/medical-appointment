@@ -466,8 +466,8 @@ const verifyTwoFactor = async (req, res) => {
       // Set cookie options for the session
       req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
       req.session.cookie.httpOnly = true;
-      req.session.cookie.secure = process.env.NODE_ENV === 'production';
-      req.session.cookie.sameSite = 'lax';
+      req.session.cookie.secure = true; // Must be true for cross-site cookies
+      req.session.cookie.sameSite = 'none'; 
 
       // Create audit entry for login with 2FA
       const auditEntry = {
