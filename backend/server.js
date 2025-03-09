@@ -28,10 +28,9 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: true, // Must be true for cross-site cookies
+      sameSite: 'none', // Must be 'none' for cross-site cookies
+      maxAge: 30 * 24 * 60 * 60 * 1000
     },
     store: MongoStore.create({
       mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0', // MongoDB connection
@@ -137,7 +136,9 @@ AboutCompanyRoutes(app);
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/public', 'index.html'));
 });
-
+app.get('/keepalive', (req, res) => {
+  res.status(200).send('Service is alive');
+});
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
