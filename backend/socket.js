@@ -12,18 +12,11 @@ module.exports = {
   init: (server) => {
     io = new Server(server, {
       cors: {
-        origin: [
-        'http://localhost:3000',
-        'https://medical-appointment-ivmr.onrender.com',
-        'https://medical-appointment-ivmr.onrender.com/',
-        `https://medical-appointment-mwuw.vercel.app`,
-        `https://medical-appointment-mwuw.vercel.app/`,
-        ],
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        origin: 'https://medical-appointment-mwuw.vercel.app', // Allow all origins
+        methods: ['GET', 'POST'],
         credentials: true,
       },
     });
-
     io.on('connection', (socket) => {
       // console.log('A user connected:', socket.id);
 
