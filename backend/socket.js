@@ -4,7 +4,12 @@ const Patient = require('./patient/patient_model');
 const MedicalSecretary = require('./medicalsecretary/medicalsecretary_model');
 const Admin = require('./admin/admin_model');
 const Doctor = require('./doctor/doctor_model'); 
-
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://medical-appointment-nt9ae46dh-samoyedqs-projects.vercel.app',
+  'https://medical-appointment-ivmr.onrender.com/',
+  'https://medical-appointment-ivmr.onrender.com'
+];
 let io;
 const clients = {}; 
 
@@ -12,10 +17,23 @@ module.exports = {
   init: (server) => {
     io = new Server(server, {
       cors: {
-        origin: 'http://localhost:3000', // Allow all origins
-        methods: ['GET', 'POST'],
+        origin: function (origin, callback) {
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
       },
+
+      transports: ['polling', 'websocket'],
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      allowEIO3: true,
+      maxHttpBufferSize: 1e8 // 100MB
     });
 
     io.on('connection', (socket) => {

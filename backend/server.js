@@ -12,14 +12,28 @@ require('dotenv').config();
 const MongoStore = require('connect-mongo');
 
 const cors = require('cors');
+const allowedOrigins = [
+  'http://localhost:3000', // React CRA default dev port
+  'https://medical-appointment-nt9ae46dh-samoyedqs-projects.vercel.app',
+  'https://medical-appointment-ivmr.onrender.com/',
+  'https://medical-appointment-ivmr.onrender.com' // production frontend
+];
+
 app.use(
   cors({
-    origin: 'https://medical-appointment-ivmr.onrender.com',
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   })
 );
+
 
 app.use(
   session({
@@ -52,7 +66,6 @@ require('./appointments/scheduler');
 // Connect to MongoDB
 require('./config/mongoose');
 //FrontendOrigins
-const allowedOrigins = ['http://localhost:3000','http://localhost:3001'];
 // CORS Configuration
 
 
