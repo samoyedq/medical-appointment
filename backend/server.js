@@ -12,26 +12,10 @@ require('dotenv').config();
 const MongoStore = require('connect-mongo');
 
 const cors = require('cors');
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://medical-appointment-nt9ae46dh-samoyedqs-projects.vercel.app',
-  'https://medical-appointment-ivmr.onrender.com',
-  'https://medical-appointment-ivmr.onrender.com/',
-  'https://molino-backend.onrender.com'
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      console.log("Request origin:", origin);
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log(`Origin ${origin} blocked by CORS`);
-        callback(null, true); // Temporarily allow all origins for debugging
-      }
-    },
-    credentials: true,
+    origin: `https://medical-appointment-ivmr.onrender.com`,
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   })
@@ -39,20 +23,19 @@ app.use(
 
 app.use(
   session({
-    secret: 'session_secret_key',
+    secret: 'session_secret_key', // Secure key
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      // Only one secure property, and properly configured
       secure: process.env.NODE_ENV === 'production',
-      // For cross-domain cookies in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'lax',
+      secure: false,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
     store: MongoStore.create({
-      mongoUrl: 'mongodb+srv://mern:mern@cluster0.6mdyfjt.mongodb.net/PIMSdb?retryWrites=true&w=majority&appName=Cluster0',
-      ttl: 30 * 24 * 60 * 60,
+      mongoUrl: 'mongodb://localhost:27017/PIMSdb', // MongoDB connection
+      ttl: 30 * 24 * 60 * 60, // Session expiry in seconds
     }),
   })
 );
@@ -69,6 +52,7 @@ require('./appointments/scheduler');
 // Connect to MongoDB
 require('./config/mongoose');
 //FrontendOrigins
+const allowedOrigins = ['http://localhost:3000','http://localhost:3001'];
 // CORS Configuration
 
 
@@ -85,6 +69,7 @@ app.use('/images', express.static(path.join(__dirname, 'announcement', 'images')
 app.use('/images', express.static(path.join(__dirname, 'news', 'images')));
 app.use('/images', express.static(path.join(__dirname, 'specialty', 'images')));
 app.use('/images', express.static(path.join(__dirname, 'services', 'images')));
+app.use('images', express.static(path.join(__dirname, 'about-company', 'images')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
