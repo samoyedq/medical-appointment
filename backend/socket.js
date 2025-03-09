@@ -15,7 +15,9 @@ module.exports = {
         origin: [
         'http://localhost:3000',
         'https://medical-appointment-ivmr.onrender.com',
-        'https://medical-appointment-ivmr.onrender.com/'
+        'https://medical-appointment-ivmr.onrender.com/',
+        `https://medical-appointment-mwuw.vercel.app`,
+        `https://medical-appointment-mwuw.vercel.app/`,
         ],
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true,
