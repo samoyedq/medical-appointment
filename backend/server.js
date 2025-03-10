@@ -26,7 +26,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   'https://medical-appointment-topaz.vercel.app',
-  'https://medical-appointment-qiih.onrender.com'
+  'https://medical-appointment-qiih.onrender.com',
+  'https://medical-appointment-mwuw-fkzgg0rzc-samoyedqs-projects.vercel.app'
 ];
 
 
