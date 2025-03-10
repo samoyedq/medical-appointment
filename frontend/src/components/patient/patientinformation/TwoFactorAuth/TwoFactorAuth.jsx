@@ -3,34 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 import { ip } from '../../../../ContentExport';
 import Swal from 'sweetalert2';
+import { useUser } from '../../../../components/UserContext';
+
 function TwoFactorAuth({ show, handleClose }) {
     const [qrCode, setQrCode] = useState(null);
     const [secretKey, setSecretKey] = useState(null);
-    const [sessionActive, setSessionActive] = useState(true);
-    const [user, setUser] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [setupStep, setSetupStep] = useState('generate'); // 'generate', 'verify', or 'complete'
+    
+    // Get user from context instead of session
+    const { user } = useUser();
 
-    // Check session status when component mounts
+    // Auto-generate QR code when modal opens if user is authenticated
     useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const response = await axios.get(`${ip.address}/api/get/session`);
-                if (!response.data || !response.data.user) {
-                    console.log('Session expired or no user data:', response.data);
-                    setSessionActive(false);
-                } else {
-                    setUser(response.data.user);
-                    // Auto-generate QR code when modal opens
-                    setupTwoFactor();
-                }
-            } catch (error) {
-                console.error('Error checking session:', error);
-            }
-        };
-        checkSession();
-    }, []);
+        if (user && user._id && show) {
+            setupTwoFactor();
+        }
+    }, [user, show]);
 
     // Setup 2FA function
     const setupTwoFactor = async (regenerate = false) => {
@@ -39,7 +29,9 @@ function TwoFactorAuth({ show, handleClose }) {
             const response = await axios.post(`${ip.address}/api/set-up-2fa`, { 
                 regenerate,
                 id: user?._id,
-                role: user?.role
+                role: user?.role || 'Patient' // Default to Patient if no role found
+            }, {
+                withCredentials: true // Make sure to include cookies
             });
 
             if (response.data.qrCode && response.data.secret) {
@@ -55,6 +47,11 @@ function TwoFactorAuth({ show, handleClose }) {
             }
         } catch (error) {
             console.error('Error setting up 2FA:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.response?.data?.message || 'Could not set up 2FA. Please try again.'
+            });
         } finally {
             setLoading(false);
         }
@@ -80,8 +77,10 @@ function TwoFactorAuth({ show, handleClose }) {
             setLoading(true);
             const response = await axios.post(`${ip.address}/api/verify-2fa`, {
                 userId: user?._id,
-                role: user?.role,
+                role: user?.role || 'Patient',
                 code: verificationCode
+            }, {
+                withCredentials: true // Make sure to include cookies
             });
 
             if (response.data.verified) {
@@ -107,12 +106,34 @@ function TwoFactorAuth({ show, handleClose }) {
             Swal.fire({
                 icon: 'error',
                 title: 'Verification Error',
-                text: 'Failed to verify the code. Please try again.'
+                text: error.response?.data?.message || 'Failed to verify the code. Please try again.'
             });
         } finally {
             setLoading(false);
         }
     };
+
+    // If no user is found, show an error message
+    if (!user || !user._id) {
+        return (
+            <Modal size="lg" show={show} onHide={handleClose} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Two Factor Authentication</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Alert variant="danger">
+                        You need to be logged in to set up two-factor authentication.
+                        Please refresh the page and try again.
+                    </Alert>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleClose}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        );
+    }
 
     return (
         <Modal size="lg" show={show} onHide={handleClose} centered>
@@ -131,7 +152,6 @@ function TwoFactorAuth({ show, handleClose }) {
                             <div className="tfa-cardqr">
                                 <div className="tfa-cardqr1 text-center">
                                     <img src={qrCode} alt="QR Code" />
-                                   
                                 </div>
                             </div>
                         </div>
@@ -166,7 +186,7 @@ function TwoFactorAuth({ show, handleClose }) {
                     <Button 
                         variant="primary" 
                         onClick={() => setupTwoFactor(false)}
-                        disabled={!sessionActive || loading}
+                        disabled={loading}
                     >
                         {loading ? 'Generating...' : 'Generate QR Code'}
                     </Button>
