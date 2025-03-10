@@ -32,31 +32,67 @@ const LogInUser = ({hideOuterStyles }) => {
 
   
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAuthentication = async () => {
       try {
-        const response = await axios.get(`${ip.address}/api/get/session`, { withCredentials: true });
+        // Check authentication using HTTP-only cookies
+        const response = await axios.get(`${ip.address}/api/verify-token`, {
+          withCredentials: true // This ensures cookies are sent with the request
+        });
+        
         if (response.data.user) {
-          const existingUser = response.data.user; 
-          const existingRole = response.data.role;
-          console.log("Active session found. Role:", existingRole);
-          setUser(existingUser);
-          setRole(existingRole);
-
-          if (existingRole === 'Patient') {
+          console.log("Valid authentication found:", response.data.user);
+          setUser(response.data.user);
+          setRole(response.data.role);
+          
+          // Navigate based on role
+          if (response.data.role === 'Patient') {
             navigate('/homepage');
-          } else if (existingRole === 'Doctor') {
+          } else if (response.data.role === 'Doctor') {
             navigate('/dashboard');
+          } else if (response.data.role === 'Admin') {
+            navigate('/admin/dashboard/patient');
+          } else if (response.data.role === 'Medical Secretary') {
+            navigate('/medsec/dashboard');
           }
-          return; 
         }
+        // If no valid auth is found, stay on login page
       } catch (err) {
-        console.log("No active session or error:", err.response?.data?.message);
+        // No need to check for localStorage or session separately
+        // Just log that authentication check failed
+        console.log("Authentication check failed:", err.message);
+        
+        // Fallback: Check for session-based auth (legacy)
+        try {
+          const sessionResponse = await axios.get(`${ip.address}/api/get/session`, { 
+            withCredentials: true 
+          });
+          
+          if (sessionResponse.data.user) {
+            const existingUser = sessionResponse.data.user;
+            const existingRole = sessionResponse.data.role;
+            console.log("Legacy session found. Role:", existingRole);
+            setUser(existingUser);
+            setRole(existingRole);
+  
+            // Navigate based on role
+            if (existingRole === 'Patient') {
+              navigate('/homepage');
+            } else if (existingRole === 'Doctor') {
+              navigate('/dashboard');
+            } else if (existingRole === 'Admin') {
+              navigate('/admin/dashboard/patient');
+            } else if (existingRole === 'Medical Secretary') {
+              navigate('/medsec/dashboard');
+            }
+          }
+        } catch (sessionErr) {
+          console.log("No active session found:", sessionErr.message);
+        }
       }
-      console.log("No active session found. Show user login form.");
     };
-    checkSession();
+    
+    checkAuthentication();
   }, [navigate, setUser, setRole]);
-
   
   const loginuser = async (e) => {
     e.preventDefault();

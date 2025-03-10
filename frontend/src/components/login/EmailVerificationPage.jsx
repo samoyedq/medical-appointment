@@ -13,7 +13,7 @@ const EmailVerificationPage = () => {
   // Use fallback if location.state is undefined
   const { userId, role } = location.state || {}; // Fallback to empty object
 
-  const { setUser, setRole } = useUser();  // Use UserContext
+  const { setUser, setRole, setAuthToken } = useUser();  // Use UserContext
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [attempts, setAttempts] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,19 +61,20 @@ const EmailVerificationPage = () => {
         userId: userId,
         role: role,
         otp: enteredCode,
-      }, {
-        withCredentials: true  // Add this line
       });
 
       if (response.data.verified) {
+        // Store the JWT token
+        setAuthToken(response.data.token);
+        
         // Set user data in context
         setUser(response.data.user);
         setRole(response.data.role);
 
-        // Ensure session data is properly updated
+        // Navigate based on role
         setTimeout(() => {
             if(role === 'Patient'){
-                navigate('/homepage'); // Redirect after successful verification (patient example)
+                navigate('/homepage'); 
             } else if (role === 'Doctor'){
                 navigate('/dashboard');
             } else if (role === 'Admin') {
@@ -147,7 +148,6 @@ const EmailVerificationPage = () => {
       </form>
     </div>
     </>
-
   );
 };
 

@@ -21,31 +21,31 @@ const StaffLogin = ({ hideOuterStyles }) => {
 
 
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await axios.get(`${ip.address}/api/get/session`, { withCredentials: true });
-        if (response.data.user) {
-          const existingUser = response.data.user; 
-          const existingRole = response.data.role;
-          console.log("Active session found. Role:", existingRole);
-          setUser(existingUser);
-          setRole(existingRole);
+  // useEffect(() => {
+  //   const checkSession = async () => {
+  //     try {
+  //       const response = await axios.get(`${ip.address}/api/get/session`, { withCredentials: true });
+  //       if (response.data.user) {
+  //         const existingUser = response.data.user; 
+  //         const existingRole = response.data.role;
+  //         console.log("Active session found. Role:", existingRole);
+  //         setUser(existingUser);
+  //         setRole(existingRole);
 
-          if (existingRole === 'Medical Secretary') {
-            navigate('/medsec/dashboard');
-          } else if (existingRole === 'Admin') {
-            navigate('/admin/dashboard/patient');
-          }
-          return; 
-        }
-      } catch (err) {
-        console.log("No active session or error:", err.response?.data?.message);
-      }
-      console.log("No active session found. Show user login form.");
-    };
-    checkSession();
-  }, [navigate, setUser, setRole]);
+  //         if (existingRole === 'Medical Secretary') {
+  //           navigate('/medsec/dashboard');
+  //         } else if (existingRole === 'Admin') {
+  //           navigate('/admin/dashboard/patient');
+  //         }
+  //         return; 
+  //       }
+  //     } catch (err) {
+  //       console.log("No active session or error:", err.response?.data?.message);
+  //     }
+  //     console.log("No active session found. Show user login form.");
+  //   };
+  //   checkSession();
+  // }, [navigate, setUser, setRole]);
 
 
   const handleLogIn = async (e) => {

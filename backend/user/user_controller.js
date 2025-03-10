@@ -10,7 +10,8 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const nodemailer = require('nodemailer');
 const { staff_email } = require('../EmailExport');
-
+const { JWT_SECRET, generateToken } = require('../middleware/authMiddleware');
+const jwt = require('jsonwebtoken');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -271,50 +272,73 @@ const getSession = (req, res) => {
 };
 
 // Logout
+// Update this function
 const unifiedLogout = async (req, res) => {
   try {
-    // 1. Check if session has a user + role
-    if (!req.session || !req.session.role) {
-      console.log('No active session found for logout');
-      return res.status(401).json({ message: 'No active session found' });
+    // Get token from Authorization header OR cookie
+    const token = req.cookies.auth_token || 
+                 (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+    
+    if (!token) {
+      // If no token, still clear the cookie and "succeed" the logout
+      res.clearCookie('auth_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/'
+      });
+      
+      return res.json({ message: 'Logged out successfully' });
     }
-
-    // 2. If the role is 'Doctor', set them Offline
-    if (req.session.role === 'Doctor') {
-      const doctorId = req.session.user ? req.session.user._id : null; 
-      // Or if you stored doctor ID differently:
-      // const doctorId = req.session.userId;
-
-      if (doctorId) {
-        console.log(`Doctor logout. Setting doctor ${doctorId} offline`);
-        await DoctorService.updateActivityStatus(doctorId, 'Offline');
-
-        // Broadcast the doctor's updated status in real-time
-        const io = socket.getIO();
-        const clients = socket.clients;
-        for (let userId in clients) {
-          const userSocket = clients[userId];
-          userSocket.emit('doctorStatusUpdate', {
-            doctorId: doctorId,
-            activityStatus: 'Offline',
-          });
+    
+    try {
+      // Verify the token to get user info
+      const decoded = jwt.verify(token, JWT_SECRET);
+      
+      // If the role is 'Doctor', set them Offline
+      if (decoded.role === 'Doctor') {
+        const doctorId = decoded.userId;
+        
+        if (doctorId) {
+          console.log(`Doctor logout. Setting doctor ${doctorId} offline`);
+          await DoctorService.updateActivityStatus(doctorId, 'Offline');
+          
+          // Broadcast the doctor's updated status in real-time
+          const io = socket.getIO();
+          // Rest of your socket code...
         }
       }
+      
+      // Create audit entry for logout
+      const auditEntry = {
+        user: decoded.userId,
+        userType: decoded.role,
+        action: 'Logout',
+        description: `${decoded.role} has logged out`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+      };
+      
+      const newAudit = new Audit(auditEntry);
+      await newAudit.save();
+    } catch (err) {
+      // If token verification fails, log but continue with logout
+      console.error('Token verification error during logout:', err);
     }
-
-    // 3. Finally, destroy the session
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Error destroying session:', err);
-        return res.status(500).json({ message: 'Error destroying session' });
-      }
-      // Clear the cookie
-      res.clearCookie('connect.sid');
-      console.log('Session destroyed and cookie cleared');
-      return res.json({ message: 'Logged out successfully' });
+    
+    // Always clear the cookie
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/'
     });
+    
+    return res.json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Error in unifiedLogout:', error);
+    // Even if there's an error, try to clear the cookie
+    res.clearCookie('auth_token');
     res.status(500).json({ message: 'Error logging out', error });
   }
 };
@@ -436,43 +460,57 @@ const verifyTwoFactor = async (req, res) => {
       // Determine the field names dynamically based on the role
       let firstName = '';
       let lastName = '';
+      let email = '';
       
       if (role === 'Patient') {
         firstName = user.patient_firstName;
         lastName = user.patient_lastName;
+        email = user.patient_email;
       } else if (role === 'Doctor') {
         firstName = user.dr_firstName;
         lastName = user.dr_lastName;
+        email = user.dr_email;
       } else if (role === 'Medical Secretary') {
         firstName = user.ms_firstName;
         lastName = user.ms_lastName;
+        email = user.ms_email;
       } else if (role === 'Admin') {
         firstName = user.firstName;
         lastName = user.lastName;
+        email = user.email;
       }
 
-      // Create session after successful 2FA verification
-      req.session.user = {
+      // Create user object to include in token and response
+      const userData = {
         _id: user._id,
-        email: user.email,
+        email: email,
         firstName: firstName,
         lastName: lastName,
-        role: role, // The role is passed in from the frontend
+        role: role,
       };
 
-      req.session.role = role;
-      req.session.userId = user._id;
+      // Generate JWT token
+      const token = generateToken({
+        userId: user._id,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        role: role,
+      });
 
-      // Set cookie options for the session
-      req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-      req.session.cookie.httpOnly = true;
-      req.session.cookie.secure = process.env.NODE_ENV === 'production';
-      req.session.cookie.sameSite = 'lax';
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // true in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/'
+      });
+
 
       // Create audit entry for login with 2FA
       const auditEntry = {
         user: user._id,
-        userType: role, // Use the provided role
+        userType: role,
         action: 'Login with 2FA',
         description: `${role} has logged in with 2FA`,
         ipAddress: req.ip,
@@ -485,7 +523,8 @@ const verifyTwoFactor = async (req, res) => {
 
       res.json({
         verified: true,
-        user: req.session.user,
+        token: token,
+        user: userData,
         role: role,
       });
     } else {
@@ -545,37 +584,57 @@ const verifyEmailOTP = async (req, res) => {
     // Determine the field names dynamically based on the role
     let firstName = '';
     let lastName = '';
+    let email = '';
+    
     if (role === 'Patient') {
       firstName = user.patient_firstName;
       lastName = user.patient_lastName;
+      email = user.patient_email;
     } else if (role === 'Doctor') {
       firstName = user.dr_firstName;
       lastName = user.dr_lastName;
+      email = user.dr_email;
     } else if (role === 'Medical Secretary') {
       firstName = user.ms_firstName;
       lastName = user.ms_lastName;
+      email = user.ms_email;
     } else if (role === 'Admin') {
       firstName = user.firstName;
       lastName = user.lastName;
+      email = user.email;
     }
 
-    // Create session after successful OTP verification
-    req.session.user = {
+    // Create user object to include in token and response
+    const userData = {
       _id: user._id,
-      email: user.email,
+      email: email,
       firstName: firstName,
       lastName: lastName,
-      role: role,
+      role: role
     };
+    
 
-    req.session.role = role;
-    req.session.userId = user._id;
+    // Generate JWT token
 
-    // Set cookie options for the session
-    req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-    req.session.cookie.httpOnly = true;
-    req.session.cookie.secure = process.env.NODE_ENV === 'production';
-    req.session.cookie.sameSite = 'lax';
+
+    const jwt = require('jsonwebtoken');
+    const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key_for_dev';
+    
+    const token = jwt.sign({
+      userId: user._id,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      role: role
+    }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // true for HTTPS in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' allows cross-site cookies with HTTPS
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'
+    });
 
     // Create audit entry for login with email OTP
     const auditEntry = {
@@ -591,10 +650,11 @@ const verifyEmailOTP = async (req, res) => {
     await newAudit.save();
     await user.updateOne({ $push: { audits: newAudit._id } });
 
-    res.json({
+    res.status(200).json({
       verified: true,
-      user: req.session.user,
-      role: role,
+      token: token, // For React Native/mobile
+      user: userData,
+      role: role
     });
   } catch (err) {
     console.error('Error verifying email OTP:', err);
@@ -637,6 +697,50 @@ const unableTwoFactorEnabled = async (req, res) => {
 };
 
 
+const verifyToken = (req, res) => {
+  try {
+    // Check for token in cookie or Authorization header
+    const token = req.cookies.auth_token || 
+                 (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+    
+    // Debug logs
+    console.log("Verify token request received");
+    console.log("Token from cookie:", req.cookies.auth_token);
+    console.log("Token from header:", req.headers.authorization);
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No authentication token found' });
+    }
+    
+    try {
+      // Import JWT directly here to avoid any module not found issues
+      const jwt = require('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key_for_dev';
+      
+      const decoded = jwt.verify(token, JWT_SECRET);
+      
+      console.log("Token decoded successfully:", decoded);
+      
+      return res.json({
+        user: {
+          _id: decoded.userId,
+          firstName: decoded.firstName,
+          lastName: decoded.lastName,
+          email: decoded.email
+        },
+        role: decoded.role
+      });
+    } catch (jwtError) {
+      console.error('JWT verification error:', jwtError);
+      return res.status(401).json({ message: 'Invalid token: ' + jwtError.message });
+    }
+  } catch (err) {
+    console.error('General error in verify-token route:', err);
+    return res.status(500).json({ message: 'Server error during token verification', error: err.message });
+  }
+};
+
+
 
 
 
@@ -649,4 +753,5 @@ module.exports = {
   verifyTwoFactor,
   verifyEmailOTP,
   unableTwoFactorEnabled,
+  verifyToken,
 };

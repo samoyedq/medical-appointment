@@ -20,11 +20,11 @@ function HomePagePatient() {
   const [showChat, setShowChat] = useState(false);
   const [tooltipMessage, setTooltipMessage] = useState('');
 
-  useEffect(() => {
-    if(!user._id){
-      navigate('/medapp/login');
-    }
-  }, [user._id, navigate]);
+  // useEffect(() => {
+  //   if(!user._id){
+  //     navigate('/medapp/login');
+  //   }
+  // }, [user._id, navigate]);
 
 
   

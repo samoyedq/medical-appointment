@@ -23,11 +23,11 @@ function PatientNavBar({ pid }) {
   // Use useRef to maintain the socket instance
   const socketRef = useRef();
   const location = useLocation();
-  useEffect(() => {
-    if (!pid) {
-      navigate('/medapp/login');
-    }
-  }, [pid, navigate]);
+  // useEffect(() => {
+  //   if (!pid) {
+  //     navigate('/medapp/login');
+  //   }
+  // }, [pid, navigate]);
 
   const handleLogout = () => {
     setShowLogoutModal(true); // Show the logout confirmation modal
@@ -119,10 +119,10 @@ const cancelLogout = () => {
 
   useEffect(() => {
     // This will handle redirects if the user isn't logged in or is not a patient
-    if (!user || !user._id || user.role !== "Patient") {
-      navigate('/medapp/login');
-      return;
-    }
+    // if (!user || !user._id || user.role !== "Patient") {
+    //   navigate('/medapp/login');
+    //   return;
+    // }
     
     // If we have a valid user, get their notifications
     if (user._id) {

@@ -16,4 +16,5 @@ module.exports = app => {
     app.post('/api/disable-2fa', UserController.unableTwoFactorEnabled);
     //For Post
    
+    app.get('/api/verify-token', UserController.verifyToken);
 }

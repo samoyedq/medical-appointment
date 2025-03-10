@@ -1,37 +1,42 @@
 const jwt = require('jsonwebtoken');
 
-const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
 
-  if (authHeader) {
-    // Extract token from 'Bearer <token>' format
-    const token = authHeader.split(' ')[1];
+const authenticateUser = (req, res, next) => {
+  // Get token from cookie OR from Authorization header (for React Native)
+  const token = 
+    req.cookies.auth_token || 
+    (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
 
-    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
-      if (err) {
-        console.error('JWT verification error:', err);
-        return res.status(403).json({ message: 'Forbidden access' });
-      }
-
-      // Set user info in request object
-      req.userId = user.userId;
-      req.userRole = user.role;
-
-      next();
-    });
-  } else {
-    res.status(401).json({ message: 'Unauthorized access' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Attach user data to request
+    req.userId = decoded.userId;
+    req.userRole = decoded.role;
+    req.user = decoded;
+    
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(401).json({ message: 'Invalid or expired authentication' });
   }
 };
 
-
-const authenticateUser = (req, res, next) => {
-  // For development purposes, bypass authentication
-  // Set req.userId and req.userRole manually
-  req.userId = 'your_test_user_id'; // Replace with a valid user ID from your database
-  req.userRole = 'Medical Secretary'; // Or 'Patient', depending on the test
-  next();
+const generateToken = (userData) => {
+  return jwt.sign(
+    userData,
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 };
 
-
-module.exports = { authenticateJWT, authenticateUser };
+module.exports = {
+  authenticateUser,
+  generateToken,
+  JWT_SECRET
+};

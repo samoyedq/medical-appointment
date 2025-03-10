@@ -10,7 +10,11 @@ const http = require('http');
 const server = http.createServer(app); // Use this server for Socket.IO
 require('dotenv').config();
 const MongoStore = require('connect-mongo');
-
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key_for_development';
+// Add before your routes, after express.json()
+app.use(cookieParser());
 const cors = require('cors');
 app.use(
   cors({
@@ -39,7 +43,45 @@ app.use(
     }),
   })
 );
-
+app.get('/api/verify-token', (req, res) => {
+  try {
+    // First try to get token from authorization header (for mobile)
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+    
+    // If no token in header, try to get from cookies
+    if (!token && req.cookies) {
+      token = req.cookies.auth_token;
+    }
+    
+    console.log("Token check:", token ? "Found token" : "No token");
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No authentication token found' });
+    }
+    
+    // Verify the token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("Decoded token:", decoded);
+    
+    // Return user data
+    return res.json({
+      user: {
+        _id: decoded.userId,
+        firstName: decoded.firstName,
+        lastName: decoded.lastName,
+        email: decoded.email
+      },
+      role: decoded.role
+    });
+  } catch (err) {
+    console.error('Token verification error:', err);
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+});
 
 // Initialize Socket.IO
 const socket = require('./socket'); // Import the socket module
