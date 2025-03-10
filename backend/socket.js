@@ -7,15 +7,29 @@ const Doctor = require('./doctor/doctor_model');
 
 let io;
 const clients = {}; 
+const isProduction = process.env.NODE_ENV === 'production';
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://medical-appointment-topaz.vercel.app',
+  'https://medical-appointment-qiih.onrender.com'
+];
 
 module.exports = {
+
+  
   init: (server) => {
     io = new Server(server, {
       cors: {
-        origin: 'http://localhost:3000', // Allow all origins
+        origin: allowedOrigins,
         methods: ['GET', 'POST'],
         credentials: true,
+        transports: ['websocket', 'polling']
       },
+      // For better reliability with free tier hosting
+      pingTimeout: 30000,
+      pingInterval: 25000
     });
 
     io.on('connection', (socket) => {

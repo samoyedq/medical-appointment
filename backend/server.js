@@ -16,14 +16,39 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key_for_develo
 // Add before your routes, after express.json()
 app.use(cookieParser());
 const cors = require('cors');
-app.use(
-  cors({
-    origin: 'http://localhost:3000',
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  })
-);
+require('dotenv').config();
+
+const isProduction = process.env.NODE_ENV === 'production';
+console.log(`Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+
+// Define allowed origins
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://medical-appointment-topaz.vercel.app',
+  'https://medical-appointment-qiih.onrender.com'
+];
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked origin: ${origin}`);
+      // For development, allow anyway
+      callback(null, isProduction ? false : true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+}));
 
 app.use(
   session({
@@ -33,7 +58,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: false,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
@@ -94,7 +119,6 @@ require('./appointments/scheduler');
 // Connect to MongoDB
 require('./config/mongoose');
 //FrontendOrigins
-const allowedOrigins = ['http://localhost:3000','http://localhost:3001'];
 // CORS Configuration
 
 
