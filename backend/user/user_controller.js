@@ -499,6 +499,7 @@ const verifyTwoFactor = async (req, res) => {
       });
 
       res.cookie('auth_token', token, {
+        domain: 'molino-backend.onrender.com',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // true in production
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -629,6 +630,7 @@ const verifyEmailOTP = async (req, res) => {
     }, JWT_SECRET, { expiresIn: '7d' });
 
     res.cookie('auth_token', token, {
+      domain: 'molino-backend.onrender.com',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true for HTTPS in production
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' allows cross-site cookies with HTTPS
