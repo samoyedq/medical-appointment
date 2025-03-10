@@ -4,13 +4,13 @@ const isLocalhost = window.location.hostname === 'localhost' ||
 const image = {
   logo: isLocalhost 
       ? "http://localhost:8000/images/Molino-Polyclinic-Logo.png"
-      : "https://medical-appointment-qiih.onrender.com/images/Molino-Polyclinic-Logo.png"
+      : "https://molino-backend.onrender.com/images/Molino-Polyclinic-Logo.png"
 };
 
 const ip = {
   address: isLocalhost
       ? 'http://localhost:8000'
-      : 'https://medical-appointment-qiih.onrender.com'
+      : 'https://molino-backend.onrender.com'
 };
 
 // Configure axios defaults
